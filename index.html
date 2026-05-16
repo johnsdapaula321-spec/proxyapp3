@@ -2148,8 +2148,8 @@ const app = {
       '<div class="form-group"><label>Protocol</label><input type="text" value="' + (proxy.protocol || 'HTTP') + '" readonly /></div>' +
       '<div class="form-group"><label>Host</label><input type="text" value="' + (proxy.host || '') + '" readonly /></div>' +
       '<div class="form-group"><label>Port</label><input type="text" value="' + (proxy.port || '') + '" readonly /></div>' +
-      '<div class="form-group"><label>Username</label><div style="display:flex;gap:8px;"><input type="text" value="' + (proxy.username || '') + '" readonly style="flex:1;" /><button class="btn btn-small btn-primary" onclick="app.copyToClipboard(\\'' + (proxy.username || '') + '\')">Copy</button></div></div>' +
-      '<div class="form-group"><label>Password</label><div style="display:flex;gap:8px;"><input type="password" value="' + (proxy.password || '') + '" readonly style="flex:1;" id="proxyPasswordField" /><button class="btn btn-small btn-primary" onclick="app.togglePasswordVisibility()">👁️</button><button class="btn btn-small btn-primary" onclick="app.copyToClipboard(\\'' + (proxy.password || '') + '\')">Copy</button></div></div>' +
+      '<div class="form-group"><label>Username</label><div style="display:flex;gap:8px;"><input type="text" value="' + (proxy.username || "") + '" readonly style="flex:1;" /><button class="btn btn-small btn-primary" onclick="app.copyToClipboard(\\'' + (proxy.username || "") + '\')">Copy</button></div></div>' +
+      '<div class="form-group"><label>Password</label><div style="display:flex;gap:8px;"><input type="password" value="' + (proxy.password || "") + '" readonly style="flex:1;" id="proxyPasswordField" /><button class="btn btn-small btn-primary" onclick="app.togglePasswordVisibility()">👁️</button><button class="btn btn-small btn-primary" onclick="app.copyToClipboard(\\'' + (proxy.password || "") + '\')">Copy</button></div></div>' +
       (proxy.notes ? '<div class="form-group"><label>Notes</label><textarea readonly>' + proxy.notes + '</textarea></div>' : '');
 
     document.getElementById('proxyDetailsTitle').textContent = '🔐 ' + (proxy.name || 'Proxy Details');
