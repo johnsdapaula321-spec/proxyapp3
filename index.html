@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#06b6d4">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://krqmphkpygfqahghrwhn.supabase.co https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://krqmphkpygfqahghrwhn.supabase.co https://httpbin.org;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://jyoantyeawpksdwcyiiu.supabase.co https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://jyoantyeawpksdwcyiiu.supabase.co https://httpbin.org;">
   <title>⚡ Tesla Phrendly Proxy Commander - Global Edition</title>
   <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiVGVzbGEgUGhyZW5kbHkgQ29tbWFuZGVyIiwic2hvcnRfbmFtZSI6IlRlc2xhQ21kIiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwYTBlMWEiLCJ0aGVtZV9jb2xvciI6IiMwNmI2ZDQiLCJpY29ucyI6W3sic3JjIjoiL2ljb24tMTkyLnBuZyIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9wbmcifSx7InNyYyI6Ii9pY29uLTUxMi5wbmciLCJzaXplcyI6IjUxMng1MTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==">
-  <link rel="preconnect" href="https://krqmphkpygfqahghrwhn.supabase.co">
+  <link rel="preconnect" href="https://jyoantyeawpksdwcyiiu.supabase.co">
   <style>
     :root { --bg-primary: #0a0e1a; --bg-secondary: #151b2d; --bg-card: #1e2947; --bg-elevated: #2a3555; --text-primary: #e2e8f0; --text-secondary: #94a3b8; --accent-cyan: #06b6d4; --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-pink: #ec4899; --accent-gold: #f59e0b; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --border: #334155; --shadow: 0 10px 40px rgba(0,0,0,0.4); }
     [data-theme="light"] { --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #f1f5f9; --bg-elevated: #e2e8f0; --text-primary: #1e293b; --text-secondary: #64748b; --border: #cbd5e1; --shadow: 0 10px 40px rgba(0,0,0,0.1); }
@@ -302,7 +302,7 @@
     <div class="spinner"></div>
     <div style="color:var(--text-secondary);">⚡ Loading Tesla Commander...</div>
     <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;" id="loadingStatus">Initializing...</div>
-    <div style="color:var(--text-secondary);font-size:0.75rem;margin-top:4px;" id="loadingError" style="display:none;"></div>
+    <div style="color:var(--text-secondary);font-size:0.75rem;margin-top:4px;display:none;" id="loadingError"></div>
     <button id="loadingRetryBtn" onclick="location.reload()" style="display:none;margin-top:12px;padding:8px 16px;background:var(--accent-cyan);border:none;border-radius:6px;cursor:pointer;color:white;font-weight:600;">Retry</button>
   </div>
   
@@ -1230,13 +1230,10 @@
       </div>
       <div class="modal-actions">
         <button class="btn" onclick="app.closeModal('impersonateModal')">Cancel</button>
-        <button class="btn btn-primary" onclick="app.startImpersonating()">👁️ View As User</button>
+        <button class="btn btn-primary" onclick="app.impersonateUser(document.getElementById('impersonateUserSelect').value)">👁️ View As User</button>
       </div>
     </div>
   </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -1314,6 +1311,16 @@ const app = {
   // ============================================================
 
   async init() {
+
+    // Safety timeout - hide loading after 15 seconds no matter what
+    setTimeout(() => {
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay && overlay.style.display !== 'none') {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+        console.warn('Loading timeout - forcing overlay hide');
+      }
+    }, 10000);
     console.log('🚀 Initializing Tesla Commander v4.0...');
     this.updateLoadingStatus('Connecting to database...');
 
@@ -1338,10 +1345,19 @@ const app = {
         realtime: { params: { eventsPerSecond: 10 } }
       });
 
-      // Test connection
-      const { error } = await this.db.from('team_members').select('count').limit(1);
-      if (error && error.code !== 'PGRST116') {
-        console.warn('DB connection issue:', error);
+      // Test connection with timeout
+      try {
+        const testPromise = this.db.from('team_members').select('count').limit(1);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Connection timeout')), 5000)
+        );
+        const { error } = await Promise.race([testPromise, timeoutPromise]);
+        if (error && error.code !== 'PGRST116') {
+          console.warn('DB connection issue:', error);
+        }
+      } catch (connErr) {
+        console.warn('DB connection test failed:', connErr.message);
+        this.showNotification('Database connection slow or unavailable. Some features may be limited.', 'warning');
       }
 
       this.updateLoadingStatus('Loading data...');
